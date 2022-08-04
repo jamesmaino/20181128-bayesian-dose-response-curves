@@ -49,6 +49,7 @@ ggplot() +
         aes(dose, ymin = p - 1.96 * se, max = p + 1.96 * se, fill = pop),
         alpha = 0.5
     ) +
+    coord_cartesian(expand=FALSE, ylim=c(0,1), xlim=c(1e-2, 1e4)) +
     mydarktheme +
     xlab("omethoate (mg/L)") +
     ggtitle("Frequentist") +
@@ -139,6 +140,7 @@ pred %>%
     geom_line(aes(color=pop)) +
     geom_ribbon(aes(ymin = predl95, ymax = predu95), alpha = 0.5) +
     mydarktheme +
+    coord_cartesian(expand=FALSE, ylim=c(0,1), xlim=c(1e-2, 1e4)) +
     xlab("omethoate (mg/L)") +
     ggtitle("Bayesian") +
     scale_x_log10()

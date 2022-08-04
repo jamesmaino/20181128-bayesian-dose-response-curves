@@ -134,9 +134,9 @@ for (i in 1:nrow(pred)) {
 
 pred %>%
     mutate(pop = c("control", "resistant")[pop]) %>%
-    ggplot(aes(x = dose, y = pred, color = pop, fill = pop)) +
+    ggplot(aes(x = dose, y = pred, fill = pop)) +
     geom_point(data = d, aes(dose, dead / total, color = pop)) +
-    geom_line() +
+    geom_line(aes(color=pop)) +
     geom_ribbon(aes(ymin = predl95, ymax = predu95), alpha = 0.5) +
     mydarktheme +
     xlab("omethoate (mg/L)") +

@@ -85,64 +85,59 @@ fit <- stan(
     chains = 4,
     cores = 4,
     thin = 1,
-    seed=123
+    seed = 123
 )
 
-print(fit, probs=c(0.025, 0.975))
+print(fit, probs = c(0.025, 0.975))
 
 e <- rstan::extract(fit)
-a <- tibble(control = e$a[,1], resistant = e$a[,2]) %>% 
-mutate(par = "a", id=1:n())
-b <- tibble(control = e$b[,1], resistant = e$b[,2]) %>% 
-mutate(par = "b", id=1:n())
+a <- tibble(control = e$a[, 1], resistant = e$a[, 2]) %>%
+    mutate(par = "a", id = 1:n())
+b <- tibble(control = e$b[, 1], resistant = e$b[, 2]) %>%
+    mutate(par = "b", id = 1:n())
 
-dl = bind_rows(a, b) %>%
+dl <- bind_rows(a, b) %>%
     pivot_longer(-c(par, id))
 
-ggplot(dl, aes(x = value, color=name, fill=name)) +
-    geom_density(alpha=0.5) +
+ggplot(dl, aes(x = value, color = name, fill = name)) +
+    geom_density(alpha = 0.5) +
     facet_wrap(~par, scales = "free") +
     mydarktheme
 ggsave("plots/plot2.png", height = 6, width = 10)
 
-dl %>% 
+dl %>%
     pivot_wider(names_from = par, values_from = value) %>%
-    ggplot(aes(a, b, color=name)) +
-    geom_point(alpha=0.1) +
+    ggplot(aes(a, b, color = name)) +
+    geom_point(alpha = 0.1) +
     facet_wrap(~name, scales = "free") +
-    mydarktheme + 
-    guides(color="none")
+    mydarktheme +
+    guides(color = "none")
 ggsave("plots/plot3.png", height = 5, width = 10)
 
-pred <- 
-    expand.grid(dose = 10^seq(-2, 4, by=0.1), pop = c(1,2)) %>% 
+pred <-
+    expand.grid(dose = 10^seq(-2, 4, by = 0.1), pop = c(1, 2)) %>%
     as_tibble()
 
-pred$pred = NA
-pred$predu95 = NA
-pred$predl95 = NA 
-for (i in 1:nrow(pred)){
-    pop = pred$pop[i]
-    dose = pred$dose[i]
-    logit = e$a[ ,pop] + e$b[ ,pop] * log(dose)
-    p = 1/(1 + exp(-logit))
-    qs = quantile(p, c(0.025, 0.5, 0.975))
-    pred$predl95[i] = qs[1]
-    pred$pred[i]    = qs[2]
-    pred$predu95[i] = qs[3]
+pred$pred <- NA
+pred$predu95 <- NA
+pred$predl95 <- NA
+for (i in 1:nrow(pred)) {
+    pop <- pred$pop[i]
+    dose <- pred$dose[i]
+    logit <- e$a[, pop] + e$b[, pop] * log(dose)
+    p <- 1 / (1 + exp(-logit))
+    qs <- quantile(p, c(0.025, 0.5, 0.975))
+    pred$predl95[i] <- qs[1]
+    pred$pred[i] <- qs[2]
+    pred$predu95[i] <- qs[3]
 }
 
-pred %>% 
-ggplot() + 
-geom_line(aes(x=dose, y=pred, color=pop)) + 
-scale_x_log10()
-
-pred %>% 
-mutate(pop = c('control','resistant')[pop]) %>%
-ggplot(aes(x=dose, y=pred, color=pop, fill=pop)) +
-    geom_point(data=d, aes(dose, dead / total, color=pop)) +
+pred %>%
+    mutate(pop = c("control", "resistant")[pop]) %>%
+    ggplot(aes(x = dose, y = pred, color = pop, fill = pop)) +
+    geom_point(data = d, aes(dose, dead / total, color = pop)) +
     geom_line() +
-    geom_ribbon(aes(ymin=predl95, ymax=predu95), alpha=0.5) +
+    geom_ribbon(aes(ymin = predl95, ymax = predu95), alpha = 0.5) +
     mydarktheme +
     xlab("omethoate (mg/L)") +
     ggtitle("Bayesian") +
@@ -152,7 +147,7 @@ ggsave("plots/plot4.png", height = 6, width = 10)
 
 # As a side note it is generally better to use matrix notation so that the stan code need not change for minor variations
 
-x = model.matrix(~pop/I(log(dose)) - 1, data=db)
+x <- model.matrix(~ pop / I(log(dose)) - 1, data = db)
 stan_data_mat <- list(
     N = nrow(db),
     y = db$outcome,
@@ -168,10 +163,10 @@ fit_mat <- stan(
     chains = 4,
     cores = 4,
     thin = 1,
-    seed=123
+    seed = 123
 )
 
-print(fit_mat, probs=c(0.025, 0.975))
+print(fit_mat, probs = c(0.025, 0.975))
 
 ########### SECOND BLOG POST START HERE ##############
 

@@ -188,22 +188,23 @@ SE <- sqrt(((pd %*% vcov(m1)[cf, cf]) * pd) %*% c(1, 1))
 # LD50
 exp(c(x.p - 1.96 * SE, x.p + 1.96 * SE))
 
-
-post <- extract.samples(m2, n = 1e5)
-logx50 <- -post$a[, 1] / post$b[, 1]
+# bayesian
+post <- extract(fit_mat)
+logx50 <- -post$beta[, 1] / post$beta[, 3]
 exp(mean(logx50))
-exp(HPDI(logx50, prob = 0.95))
+exp(quantile(logx50, c(0.025, 0.975)))
 
 # LC50 using maximum liklihood
 # control
 con <- dose.p(m1, c(1, 3), p = 0.5)
 exp(con)
-exp(c(con - 1.96 * attr(con, "SE"), con + 1.96 * attr(con, "SE")))
+t95 <- qnorm(0.025, lower.tail = FALSE)
+exp(c(con - t95 * attr(con, "SE"), con + t95 * attr(con, "SE")))
 
 # resistant
 res <- dose.p(m1, c(2, 4), p = 0.5)
 res
-exp(c(res - 1.96 * attr(con, "SE"), res + 1.96 * attr(con, "SE")))
+exp(c(res - t95 * attr(con, "SE"), res + t95 * attr(con, "SE")))
 
 # resistance factor
 exp(res[1]) / exp(con[1])
@@ -219,31 +220,13 @@ m1_no_pop <- glm(cbind(dead, alive) ~ log(dose),
 anova(m1_full, m1_no_pop, test = "LRT")
 
 # control LC50
-exp(mean(-post$a[, 1] / post$b[, 1]))
+exp(mean(-post$beta[, 1] / post$beta[, 3]))
 
 # resistant LC50
-exp(mean(-post$a[, 2] / post$b[, 2]))
+exp(mean(-post$beta[, 2] / post$beta[, 4]))
 
 # resistance factor with 95% credible intervals
-x50_diff <- exp(-post$a[, 2] / post$b[, 2] - -post$a[, 1] / post$b[, 1])
+x50_diff <- exp(-post$beta[, 2] / post$beta[, 4] - 
+    -post$beta[, 1] / post$beta[, 3])
 mean(x50_diff)
-HPDI(x50_diff, prob = 0.95)
-
-d_stan <- d %>%
-    ungroup() %>%
-    mutate(
-        pop = if_else(pop == "control", 1, 2),
-        logdose = log(dose)
-    ) %>%
-    as.data.frame()
-
-m2.1 <- rethinking::map(
-    alist(
-        dead ~ dbinom(total, p),
-        logit(p) <- a[pop] + b[pop] * logdose,
-        a[pop] ~ dnorm(0, 10),
-        b[pop] ~ dnorm(0, 10)
-    ),
-    data = d_stan, start = list(a = c(-3, -5), b = c(1.4, 1.6))
-    # , chains=2 , iter=2500 , warmup=500
-)
+quantile(x50_diff, c(0.025, 0.975))

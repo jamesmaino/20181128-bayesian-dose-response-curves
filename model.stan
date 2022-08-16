@@ -1,8 +1,8 @@
 data {
 
   int <lower = 0> N; 
-  array [N] int <lower = 0, upper = 1> y ;
-  array [N] int <lower = 1> pop;
+  int <lower = 0, upper = 1> y[N] ;
+  int <lower = 1> pop[N];
   vector <lower = 0> [N] dose; 
 
 }
